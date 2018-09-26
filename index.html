@@ -11,13 +11,54 @@
     <link rel="stylesheet" href="assets/css/style.css">
   </head>
   <body>
-      
-    <!-- Optional JavaScript -->
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/js/bootstrap.min.js" integrity="sha384-o+RDsa0aLu++PJvFqy8fFScvbHFLtbvScb8AjopnFD+iEQ7wo/CG0xlczd+2O/em" crossorigin="anonymous"></script>
-    <script src="https://www.gstatic.com/firebasejs/5.5.1/firebase.js"></script>
-    <script src="assets/js/rps.js"></script>
+    <div class="container">
+
+      <!-- <div id="implements">
+        <button class="btn btn-primary id="rock" class="implementButton">ROCK</button>
+        <button class="btn btn-primary id="paper" class="implementButton">PAPER</button>
+        <button class="btn btn-primary id="scissors" class="implementButton">SCISSORS</button>
+      </div> -->
+
+      <div class="row">
+        <div class="col header">
+          <h1>Rock Paper Scissors</h1>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col" id="localPlayer">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col" id="turnStatus">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col playerCol">
+          player 1
+        </div>
+        <div class="col playerCol">
+          info
+        </div>
+        <div class="col playerCol">
+          player 2
+        </div>
+      </div>
+
+
+      <div id="watchers"></div>
+
+
+        
+      <!-- Optional JavaScript -->
+      <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+      <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+      <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.2/js/bootstrap.min.js" integrity="sha384-o+RDsa0aLu++PJvFqy8fFScvbHFLtbvScb8AjopnFD+iEQ7wo/CG0xlczd+2O/em" crossorigin="anonymous"></script>
+      <!-- <script src="https://www.gstatic.com/firebasejs/5.5.1/firebase.js"></script> -->
+      <script src="https://www.gstatic.com/firebasejs/5.0.0/firebase-app.js"></script>
+      <!-- <script src="https://www.gstatic.com/firebasejs/5.0.0/firebase-auth.js"></script> -->
+      <script src="https://www.gstatic.com/firebasejs/5.0.0/firebase-database.js"></script>
+      <script src="assets/js/rps.js"></script>
+    </div>
   </body>
 </html>
