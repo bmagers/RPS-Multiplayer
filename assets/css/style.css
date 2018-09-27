@@ -1,3 +1,7 @@
+body {
+  background-color: thistle;
+}
+
 .header {
   text-align: center;
   height: 80px;
@@ -17,4 +21,10 @@
   border: 1px solid gray;
   margin: 10px;
   height: 300px;
+  text-align: center;
+}
+
+.implementButton {
+  display: block;
+  margin: 24px auto;
 }
