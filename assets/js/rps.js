@@ -25,14 +25,17 @@ function resetGame() {
 
 function addUser(name) {
   var playerToAdd;
+  var turn;
   // will it be player 1 or player 2?
   database.ref("/players").once("value", function(snapshot) {
     if (!snapshot.child("1").exists()) {
       playerToAdd = 1;
       localPlayer = 1;
+      turn = true;
     } else if (!snapshot.child("2").exists()) {
       playerToAdd = 2;
       localPlayer = 2;
+      turn = false;
     } else {
       playerToAdd = 0;
     }
@@ -45,6 +48,7 @@ function addUser(name) {
       losses: 0,
       ties: 0,
       implement: "",
+      turn: turn,
       connected: true
     });
     var ref = database.ref("/players/" + playerToAdd + "/connected");
@@ -53,19 +57,30 @@ function addUser(name) {
   }
 }
 
-function buttons() {
-  var button1 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "ROCK").text("ROCK");
-  var button2 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "PAPER").text("PAPER");
-  var button3 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "SCISSORS").text("SCISSORS");
-  var implementsDiv = $("#implements" + localPlayer).append(button1).append(button2).append(button3);
-  $("#player" + localPlayer).append(implementsDiv);
-}
+
 
 function switchTurn() {
+  console.log("turn playing " + playing + " to " + waiting);
   database.ref("/turn").set({
     player: waiting
   });
+  database.ref("/players/" + waiting).update({
+    turn: false
+  });
+  database.ref("players/" + playing).update({
+    turn: true
+  });
 }
+
+
+function buttonsDiv() {
+  var button1 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "ROCK").text("ROCK");
+  var button2 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "PAPER").text("PAPER");
+  var button3 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "SCISSORS").text("SCISSORS");
+  var containerDiv = $("<div>").append(button1).append(button2).append(button3);
+  return containerDiv;
+}
+
 
 function updatePlayer(snapshot) {
   for (var i = 1; i <= 2; i++) {
@@ -79,7 +94,13 @@ function updatePlayer(snapshot) {
       var implement = snapshot.val()[i].implement;
       if (implement === "") {
         if (i === localPlayer && i === playing) {
-          buttons();
+          // var button1 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "ROCK").text("ROCK");
+          // var button2 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "PAPER").text("PAPER");
+          // var button3 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "SCISSORS").text("SCISSORS");
+          // $(implementsDiv).append(button1).append(button2).append(button3);
+          // $("#player" + i).append(implementsDiv);
+          $(implementsDiv).append(buttonsDiv());
+          $("#player" + i).append(implementsDiv);
         }
       } else {
         $(implementsDiv).text(implement);
@@ -96,6 +117,7 @@ function updatePlayer(snapshot) {
 }
 
 $(document).ready(function() {
+
   var input = $("<input>").attr("placeholder", "Enter your name");
   var button = $("<button>").text("Submit");
   $("#localPlayer").append(input).append(button);
@@ -140,7 +162,6 @@ $(document).ready(function() {
     waiting = (playing === 1) ? 2 : 1;
     $("#player" + waiting).css("border-color", "gray");
     $("#player" + playing).css("border-color", "yellow");
-    buttons();
   })
 
 });
