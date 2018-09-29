@@ -9,7 +9,7 @@ var config = {
 };
 firebase.initializeApp(config);
 var database = firebase.database();
-
+``
 // global variables
 var localPlayer = 0;
 var playing = 1;
@@ -19,7 +19,7 @@ $(document).ready(function() {
 
   var input = $("<input>").attr("placeholder", "Enter your name");
   var button = $("<button>").text("Submit");
-  $("#localPlayer").append(input).append(button);
+  $("#status").append(input).append(button);
 
   // listen for player name submit
   $(button).on("click", function() {
@@ -54,14 +54,29 @@ $(document).ready(function() {
         ref.onDisconnect().set(false);
 
         // update UI
-        $("#localPlayer").text(name + ", you are player " + localPlayer);
+        $("#status").text(name + ", you are player " + localPlayer);
       }
     });
   });
 
   database.ref("/players").on("value", function(snapshot) {
 
-    console.log("local player is " + localPlayer + " and playing is " + playing);
+    // check turn
+    if (snapshot.child(1).exists() && snapshot.child(2).exists()) {
+      if (snapshot.val()[1].turn) {
+        playing = 1;
+        waiting = 2;
+      } else {
+        playing = 2;
+        waiting = 1;
+      }
+      if (localPlayer === playing) {
+        $("#status").text(snapshot.val()[playing].name + ", it's your turn");
+      } else {
+        $("#status").text("Waiting for " + snapshot.val()[playing].name);
+      }
+    }
+
     var statsPlayer1;
     var statsPlayer2;
     var gameOver = false;
@@ -70,26 +85,26 @@ $(document).ready(function() {
     if (snapshot.child(1).exists() && snapshot.child(2).exists() && snapshot.val()[1].implement !== "" && snapshot.val()[2].implement !== "") {
       gameOver = true;
       var message;
-
       database.ref("/players").once("value", function(snapshot) {
         var player1 = snapshot.val()[1].implement;
         var player2 = snapshot.val()[2].implement;
         statsPlayer1 = [snapshot.val()[1].wins, snapshot.val()[1].losses, snapshot.val()[1].ties];
         statsPlayer2 = [snapshot.val()[2].wins, snapshot.val()[2].losses, snapshot.val()[2].ties];
         if (player1 === "ROCK" && player2 === "SCISSORS" || player1 === "PAPER" && player2 === "ROCK" || player1 === "SCISSORS" && player2 === "PAPER") {
-          message = "player 1 wins!";
+          message = snapshot.val()[1].name + " wins!";
           statsPlayer1[0]++;
           statsPlayer2[1]++;
         } else if (player1 === "SCISSORS" && player2 === "ROCK" || player1 === "ROCK" && player2 === "PAPER" || player1 === "PAPER" && player2 === "SCISSORS") {
-          message = "player 2 wins!";
+          message = snapshot.val()[2].name + " wins!";
           statsPlayer1[1]++;
           statsPlayer2[0]++;
         } else {
-          message = "tie game!";
+          message = "tie!";
           statsPlayer1[2]++;
           statsPlayer2[2]++;
         }
       });
+      $("#status").text("");
       $("#info").text(message);
     }
 
@@ -97,15 +112,8 @@ $(document).ready(function() {
     for (var i = 1; i <= 2; i++) {
       $("#implement" + i).text("");
       if (snapshot.child(i).exists()) {
+
         // common to both players
-
-        // calculate turn
-        if (snapshot.val()[i].turn) {
-          playing = i;
-        } else {
-          waiting = i;
-        }
-
         $("#name" + i).text(snapshot.val()[i].name);
         $("#stats" + i).text(snapshot.val()[i].wins + "-" + snapshot.val()[i].losses + "-" + snapshot.val()[i].ties);
         var implement = snapshot.val()[i].implement;
@@ -120,25 +128,24 @@ $(document).ready(function() {
               var button2 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "PAPER").text("PAPER");
               var button3 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "SCISSORS").text("SCISSORS");
               $("#implement" + i).html(button1).append(button2).append(button3);
-              console.log("This should work");
             }
           }
         }
 
         // remove remote player on disconnect
         if (i !== localPlayer && !snapshot.val()[i].connected) {
-          $("#turnStatus").text("The remote player disconnected.");
-          $("#player" + i).html("Waiting for Player " + i);
+          if (snapshot.child(localPlayer).exists()) {
+            $("#status").text("The remote player has disconnected.");
+          }
           database.ref("/players/" + i).remove();
         }
       }
     }
 
-    console.log(playing + " is playing and " + waiting + " is waiting.");
-
     if (gameOver) {
       $("#implement1").text(snapshot.val()[1].implement);
       $("#implement2").text(snapshot.val()[2].implement);
+      console.log("snapshot 2 is " + snapshot.val()[2].implement);
       setTimeout(function() {
         $("#info").text("");
         // then clear implements
@@ -146,13 +153,15 @@ $(document).ready(function() {
           implement: "",
           wins: statsPlayer1[0],
           losses: statsPlayer1[1],
-          ties: statsPlayer1[2]
+          ties: statsPlayer1[2],
+          turn: true
         });
         database.ref("/players/2").update({
           implement: "",
           wins: statsPlayer2[0],
           losses: statsPlayer2[1],
-          ties: statsPlayer2[2]
+          ties: statsPlayer2[2],
+          turn: false
         });
       }, 5000);
     }
@@ -165,8 +174,6 @@ $(document).ready(function() {
 
   // listen for implement click
   $(document).on("click", ".implementButton", function() {
-    playing = [waiting, waiting = playing][0];
-
     database.ref("/players/" + localPlayer).update({
       implement: this.id,
       turn: false

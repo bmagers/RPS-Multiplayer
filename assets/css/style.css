@@ -7,28 +7,28 @@ body {
   height: 80px;
 }
 
-#localPlayer {
+#status {
   text-align: center;
-  height: 60px;
-}
-
-#turnStatus {
-  text-align: center;
+  font-size: 20px;
   height: 60px;
 }
 
 .playerCol {
   border: 1px solid gray;
   margin: 10px;
-  height: 300px;
+  height: 270px;
   text-align: center;
 }
 
 .implementButton {
   display: block;
-  margin: 24px auto;
+  margin: 15px auto;
 }
 
-#implements {
-  font-size: 100px;
+.implement {
+  font-size: 40px;
+}
+
+#info {
+  font-size: 50px;
 }
