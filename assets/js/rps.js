@@ -124,27 +124,32 @@ $(document).ready(function() {
         var implementsDiv = $("<div>").attr("id", "implements" + i);
         var implement = snapshot.val()[i].implement;
 
-        // reset game if remote player disconnects
+        // show buttons or implement on local player
+        if (i === localPlayer) {
+          if (i === playing) {
+            // if no implement, show buttons
+            if (implement === "") {
+              var button1 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "ROCK").text("ROCK");
+              var button2 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "PAPER").text("PAPER");
+              var button3 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "SCISSORS").text("SCISSORS");
+              $(implementsDiv).append(button1).append(button2).append(button3);
+            } else {
+              // else show implement
+              $(implementsDiv).text(implement);
+            }
+            
+          } else {
+            // what to show in opponent (non localPlayer) box?
+          }
+        }
+        $("#player" + i).append(implementsDiv);
+
+        // remove remote player on disconnect
         if (i !== localPlayer && !snapshot.val()[i].connected) {
           $("#turnStatus").text("The remote player disconnected.");
           $("#player" + i).html("Waiting for Player " + i);
           database.ref("/players/" + i).remove();
         }
-
-        // show buttons or implement on local player
-        if (i === localPlayer && i === playing) {
-          if (implement === "") {
-            var button1 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "ROCK").text("ROCK");
-            var button2 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "PAPER").text("PAPER");
-            var button3 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "SCISSORS").text("SCISSORS");
-            $(implementsDiv).append(button1).append(button2).append(button3);
-            $("#player" + i).append(implementsDiv);
-          } else {
-            $(implementsDiv).text(implement);
-          }
-        }
-
-        $("#player" + i).append(implementsDiv);
       }
     }
 

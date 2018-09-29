@@ -28,3 +28,7 @@ body {
   display: block;
   margin: 24px auto;
 }
+
+#implements {
+  font-size: 100px;
+}
