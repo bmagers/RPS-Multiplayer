@@ -9,159 +9,162 @@ var config = {
 };
 firebase.initializeApp(config);
 var database = firebase.database();
-var currentUser;
-var playing;
-var waiting;
-var localPlayer;
-resetGame();
 
-function resetGame() {
-  database.ref("/turn").set({
-    player: 1
-  });
-  playing = 1;
-  waiting = 2;
-}
-
-function addUser(name) {
-  var playerToAdd;
-  var turn;
-  // will it be player 1 or player 2?
-  database.ref("/players").once("value", function(snapshot) {
-    if (!snapshot.child("1").exists()) {
-      playerToAdd = 1;
-      localPlayer = 1;
-      turn = true;
-    } else if (!snapshot.child("2").exists()) {
-      playerToAdd = 2;
-      localPlayer = 2;
-      turn = false;
-    } else {
-      playerToAdd = 0;
-    }
-  });
-  // add the player to Firebase
-  if (playerToAdd != 0) {
-    database.ref("/players/" + playerToAdd).set({
-      name: name,
-      wins: 0,
-      losses: 0,
-      ties: 0,
-      implement: "",
-      turn: turn,
-      connected: true
-    });
-    var ref = database.ref("/players/" + playerToAdd + "/connected");
-    ref.onDisconnect().set(false);
-    $("#localPlayer").text(currentUser + ", you are player " + playerToAdd);
-  }
-}
-
-
-
-function switchTurn() {
-  console.log("turn playing " + playing + " to " + waiting);
-  database.ref("/turn").set({
-    player: waiting
-  });
-  database.ref("/players/" + waiting).update({
-    turn: false
-  });
-  database.ref("players/" + playing).update({
-    turn: true
-  });
-}
-
-
-function buttonsDiv() {
-  var button1 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "ROCK").text("ROCK");
-  var button2 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "PAPER").text("PAPER");
-  var button3 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "SCISSORS").text("SCISSORS");
-  var containerDiv = $("<div>").append(button1).append(button2).append(button3);
-  return containerDiv;
-}
-
-
-function updatePlayer(snapshot) {
-  for (var i = 1; i <= 2; i++) {
-      if (snapshot.child(i).exists()) {
-      // common to both players
-      var displayName = $("<h1>").text(snapshot.val()[i].name);
-      var displayStats = $("<h2>").text(snapshot.val()[i].wins + "-" + snapshot.val()[i].losses + "-" + snapshot.val()[i].ties);
-      $("#player" + i).html(displayName).append(displayStats);
-      // add RPS buttons
-      var implementsDiv = $("<div>").attr("id", "implements" + i);
-      var implement = snapshot.val()[i].implement;
-      if (implement === "") {
-        if (i === localPlayer && i === playing) {
-          // var button1 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "ROCK").text("ROCK");
-          // var button2 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "PAPER").text("PAPER");
-          // var button3 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "SCISSORS").text("SCISSORS");
-          // $(implementsDiv).append(button1).append(button2).append(button3);
-          // $("#player" + i).append(implementsDiv);
-          $(implementsDiv).append(buttonsDiv());
-          $("#player" + i).append(implementsDiv);
-        }
-      } else {
-        $(implementsDiv).text(implement);
-      }
-      if (i !== localPlayer && !snapshot.val()[i].connected) {
-        $("#turnStatus").text("The remote player disconnected.");
-        $("#player" + i).html("Waiting for Player " + i);
-        database.ref("/players/" + i).remove();
-        resetGame();
-      }
-      $("#player" + i).append(implementsDiv);
-    }
-  }
-}
+// global variables
+var localPlayer = 0;
+var playing = 1;
+var waiting = 2;
 
 $(document).ready(function() {
 
   var input = $("<input>").attr("placeholder", "Enter your name");
   var button = $("<button>").text("Submit");
   $("#localPlayer").append(input).append(button);
+
+  // listen for player name submit
   $(button).on("click", function() {
-    currentUser = $(input).val().trim();
     $(button).off();
-    $("#turnStatus").text("Waiting for player 2");
-    addUser(currentUser);
-  });
+    var name = $(input).val().trim();
+    var turn;
 
-  $(document).on("click", ".implementButton", function() {
-    database.ref("/players/" + localPlayer).update({
-      implement: this.id
+    // will it be player 1 or player 2?
+    database.ref("/players").once("value", function(snapshot) {
+      if (!snapshot.child("1").exists()) {
+        localPlayer = 1;
+        turn = true;
+      } else if (!snapshot.child("2").exists()) {
+        localPlayer = 2;
+        turn = false;
+      }
+
+      // add the player to Firebase
+      if (localPlayer !== 0) {
+        database.ref("/players/" + localPlayer).set({
+          name: name,
+          wins: 0,
+          losses: 0,
+          ties: 0,
+          implement: "",
+          turn: turn,
+          connected: true
+        });
+
+        // handle disconnect
+        var ref = database.ref("/players/" + localPlayer + "/connected");
+        ref.onDisconnect().set(false);
+
+        // update UI
+        $("#localPlayer").text(name + ", you are player " + localPlayer);
+      }
     });
-    console.log("#implements" + playing);
-    $("#implements" + playing).text(this.innerText);
-
-
-    if (playing === 1) {
-      //
-    } else {
-      // waiting for #1
-      // compare implements -- who won?
-      // update scores
-      // write message and delay
-      //
-
-    }
-    switchTurn();
-
-    console.log(this.id);
-  })
+  });
 
   database.ref("/players").on("value", function(snapshot) {
-    // update player info
-    updatePlayer(snapshot);
+
+    console.log("local player is " + localPlayer + " and playing is " + playing);
+
+    // if both players have played, check who won
+    if (snapshot.child(1).exists() && snapshot.child(2).exists() && snapshot.val()[1].implement !== "" && snapshot.val()[2].implement !== "") {
+      var message;
+      var statsPlayer1;
+      var statsPlayer2;
+      database.ref("/players").once("value", function(snapshot) {
+        var player1 = snapshot.val()[1].implement;
+        var player2 = snapshot.val()[2].implement;
+        statsPlayer1 = [snapshot.val()[1].wins, snapshot.val()[1].losses, snapshot.val()[1].ties];
+        statsPlayer2 = [snapshot.val()[2].wins, snapshot.val()[2].losses, snapshot.val()[2].ties];
+        if (player1 === "ROCK" && player2 === "SCISSORS" || player1 === "PAPER" && player2 === "ROCK" || player1 === "SCISSORS" && player2 === "PAPER") {
+          message = "player 1 wins!";
+          statsPlayer1[0]++;
+          statsPlayer2[1]++;
+        } else if (player1 === "SCISSORS" && player2 === "ROCK" || player1 === "ROCK" && player2 === "PAPER" || player1 === "PAPER" && player2 === "SCISSORS") {
+          message = "player 2 wins!";
+          statsPlayer1[1]++;
+          statsPlayer2[0]++;
+        } else {
+          message = "tie game!";
+          statsPlayer1[2]++;
+          statsPlayer2[2]++;
+        }
+      });
+      $("#info").text(message);
+      setTimeout(function() {
+        $("#info").text("");
+        // then clear implements
+        database.ref("/players/1").update({
+          implement: "",
+          wins: statsPlayer1[0],
+          losses: statsPlayer1[1],
+          ties: statsPlayer1[2]
+        });
+        database.ref("/players/2").update({
+          implement: "",
+          wins: statsPlayer2[0],
+          losses: statsPlayer2[1],
+          ties: statsPlayer2[2]
+        });
+      }, 5000);
+    }
+
+    // build the page
+    for (var i = 1; i <= 2; i++) {
+      if (snapshot.child(i).exists()) {
+        // common to both players
+
+        // calculate turn
+        if (snapshot.val()[i].turn) {
+          playing = i;
+        } else {
+          waiting = i;
+        }
+
+        var displayName = $("<h1>").text(snapshot.val()[i].name);
+        var displayStats = $("<h2>").text(snapshot.val()[i].wins + "-" + snapshot.val()[i].losses + "-" + snapshot.val()[i].ties);
+        $("#player" + i).html(displayName).append(displayStats);
+        var implementsDiv = $("<div>").attr("id", "implements" + i);
+        var implement = snapshot.val()[i].implement;
+
+        // reset game if remote player disconnects
+        if (i !== localPlayer && !snapshot.val()[i].connected) {
+          $("#turnStatus").text("The remote player disconnected.");
+          $("#player" + i).html("Waiting for Player " + i);
+          database.ref("/players/" + i).remove();
+        }
+
+        // show buttons or implement on local player
+        if (i === localPlayer && i === playing) {
+          if (implement === "") {
+            var button1 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "ROCK").text("ROCK");
+            var button2 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "PAPER").text("PAPER");
+            var button3 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "SCISSORS").text("SCISSORS");
+            $(implementsDiv).append(button1).append(button2).append(button3);
+            $("#player" + i).append(implementsDiv);
+          } else {
+            $(implementsDiv).text(implement);
+          }
+        }
+
+        $("#player" + i).append(implementsDiv);
+      }
+    }
+
+    // indicate turn
+    $("#player" + playing).css("border-color", "yellow");
+    $("#player" + waiting).css("border-color", "gray");
+
   });
 
-  database.ref("/turn").on("value", function(snapshot) {
-    // switch turn
-    playing = snapshot.val().player;
-    waiting = (playing === 1) ? 2 : 1;
-    $("#player" + waiting).css("border-color", "gray");
-    $("#player" + playing).css("border-color", "yellow");
-  })
+  // listen for implement click
+  $(document).on("click", ".implementButton", function() {
+    playing = [waiting, waiting = playing][0];
+
+    database.ref("/players/" + localPlayer).update({
+      implement: this.id,
+      turn: false
+    });
+    database.ref("players/" + playing).update({
+      turn: true
+    });
+  });
 
 });
