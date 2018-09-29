@@ -62,12 +62,15 @@ $(document).ready(function() {
   database.ref("/players").on("value", function(snapshot) {
 
     console.log("local player is " + localPlayer + " and playing is " + playing);
+    var statsPlayer1;
+    var statsPlayer2;
+    var gameOver = false;
 
     // if both players have played, check who won
     if (snapshot.child(1).exists() && snapshot.child(2).exists() && snapshot.val()[1].implement !== "" && snapshot.val()[2].implement !== "") {
+      gameOver = true;
       var message;
-      var statsPlayer1;
-      var statsPlayer2;
+
       database.ref("/players").once("value", function(snapshot) {
         var player1 = snapshot.val()[1].implement;
         var player2 = snapshot.val()[2].implement;
@@ -88,6 +91,54 @@ $(document).ready(function() {
         }
       });
       $("#info").text(message);
+    }
+
+    // build the page
+    for (var i = 1; i <= 2; i++) {
+      $("#implement" + i).text("");
+      if (snapshot.child(i).exists()) {
+        // common to both players
+
+        // calculate turn
+        if (snapshot.val()[i].turn) {
+          playing = i;
+        } else {
+          waiting = i;
+        }
+
+        $("#name" + i).text(snapshot.val()[i].name);
+        $("#stats" + i).text(snapshot.val()[i].wins + "-" + snapshot.val()[i].losses + "-" + snapshot.val()[i].ties);
+        var implement = snapshot.val()[i].implement;
+
+        // show buttons or implement on local player
+        if (i === localPlayer) {
+          if (implement !== "") {
+            $("#implement" + i).text(implement);
+          } else {
+            if (i === playing) {
+              var button1 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "ROCK").text("ROCK");
+              var button2 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "PAPER").text("PAPER");
+              var button3 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "SCISSORS").text("SCISSORS");
+              $("#implement" + i).html(button1).append(button2).append(button3);
+              console.log("This should work");
+            }
+          }
+        }
+
+        // remove remote player on disconnect
+        if (i !== localPlayer && !snapshot.val()[i].connected) {
+          $("#turnStatus").text("The remote player disconnected.");
+          $("#player" + i).html("Waiting for Player " + i);
+          database.ref("/players/" + i).remove();
+        }
+      }
+    }
+
+    console.log(playing + " is playing and " + waiting + " is waiting.");
+
+    if (gameOver) {
+      $("#implement1").text(snapshot.val()[1].implement);
+      $("#implement2").text(snapshot.val()[2].implement);
       setTimeout(function() {
         $("#info").text("");
         // then clear implements
@@ -104,53 +155,6 @@ $(document).ready(function() {
           ties: statsPlayer2[2]
         });
       }, 5000);
-    }
-
-    // build the page
-    for (var i = 1; i <= 2; i++) {
-      if (snapshot.child(i).exists()) {
-        // common to both players
-
-        // calculate turn
-        if (snapshot.val()[i].turn) {
-          playing = i;
-        } else {
-          waiting = i;
-        }
-
-        var displayName = $("<h1>").text(snapshot.val()[i].name);
-        var displayStats = $("<h2>").text(snapshot.val()[i].wins + "-" + snapshot.val()[i].losses + "-" + snapshot.val()[i].ties);
-        $("#player" + i).html(displayName).append(displayStats);
-        var implementsDiv = $("<div>").attr("id", "implements" + i);
-        var implement = snapshot.val()[i].implement;
-
-        // show buttons or implement on local player
-        if (i === localPlayer) {
-          if (i === playing) {
-            // if no implement, show buttons
-            if (implement === "") {
-              var button1 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "ROCK").text("ROCK");
-              var button2 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "PAPER").text("PAPER");
-              var button3 = $("<button>").addClass("btn btn-primary implementButton").attr("id", "SCISSORS").text("SCISSORS");
-              $(implementsDiv).append(button1).append(button2).append(button3);
-            } else {
-              // else show implement
-              $(implementsDiv).text(implement);
-            }
-            
-          } else {
-            // what to show in opponent (non localPlayer) box?
-          }
-        }
-        $("#player" + i).append(implementsDiv);
-
-        // remove remote player on disconnect
-        if (i !== localPlayer && !snapshot.val()[i].connected) {
-          $("#turnStatus").text("The remote player disconnected.");
-          $("#player" + i).html("Waiting for Player " + i);
-          database.ref("/players/" + i).remove();
-        }
-      }
     }
 
     // indicate turn
