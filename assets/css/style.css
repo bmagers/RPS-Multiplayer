@@ -20,6 +20,10 @@ body {
   text-align: center;
 }
 
+.chatCol {
+  margin: 40px 20%;
+}
+
 .implementButton {
   display: block;
   margin: 15px auto;

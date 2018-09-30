@@ -18,8 +18,8 @@ var waiting = 2;
 
 $(document).ready(function() {
   
-  var input = $("<input>").attr("placeholder", "Enter your name");
-  var button = $("<button>").text("Submit");
+  var input = $("<input>").attr("placeholder", "Name");
+  var button = $("<button>").text("Start");
   $("#status").append(input).append(button);
 
   // listen for player name submit
@@ -147,7 +147,6 @@ $(document).ready(function() {
     if (gameOver) {
       $("#implement1").text(snapshot.val()[1].implement);
       $("#implement2").text(snapshot.val()[2].implement);
-      console.log("snapshot 2 is " + snapshot.val()[2].implement);
       setTimeout(function() {
         $("#info").text("");
         // clear implements, update scores and turn
