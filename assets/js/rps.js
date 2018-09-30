@@ -9,7 +9,7 @@ var config = {
 };
 firebase.initializeApp(config);
 var database = firebase.database();
-``
+
 // global variables
 var localPlayer = 0;
 var playing = 1;
@@ -148,7 +148,7 @@ $(document).ready(function() {
       console.log("snapshot 2 is " + snapshot.val()[2].implement);
       setTimeout(function() {
         $("#info").text("");
-        // then clear implements
+        // clear implements, update scores and turn
         database.ref("/players/1").update({
           implement: "",
           wins: statsPlayer1[0],
@@ -181,6 +181,15 @@ $(document).ready(function() {
     database.ref("players/" + playing).update({
       turn: true
     });
+  });
+
+  // listen for chat button click
+  $(document).on("click", "#chatButton", function() {
+    var chatMessage = $("#name" + localPlayer).text() + ": " + $("#chatInput").val();
+    database.ref("/chat").set({
+      chat: chatMessage
+    });
+    $("#chatInput").text("");
   });
 
 });
