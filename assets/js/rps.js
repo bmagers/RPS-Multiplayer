@@ -9,6 +9,7 @@ var config = {
 };
 firebase.initializeApp(config);
 var database = firebase.database();
+database.ref("/chat").remove();
 
 // global variables
 var localPlayer = 0;
@@ -16,7 +17,7 @@ var playing = 1;
 var waiting = 2;
 
 $(document).ready(function() {
-
+  
   var input = $("<input>").attr("placeholder", "Enter your name");
   var button = $("<button>").text("Submit");
   $("#status").append(input).append(button);
@@ -138,6 +139,7 @@ $(document).ready(function() {
             $("#status").text("The remote player has disconnected.");
           }
           database.ref("/players/" + i).remove();
+          database.ref("/chat").remove();
         }
       }
     }
@@ -186,10 +188,17 @@ $(document).ready(function() {
   // listen for chat button click
   $(document).on("click", "#chatButton", function() {
     var chatMessage = $("#name" + localPlayer).text() + ": " + $("#chatInput").val();
-    database.ref("/chat").set({
+    database.ref("/chat").push({
       chat: chatMessage
     });
     $("#chatInput").text("");
+  });
+
+  // listen for chat update
+  database.ref("/chat").on("child_added", function(snapshot) {
+    $("#chatInput").val("");
+    $("#chatOutput").append(snapshot.val().chat + "\n");
+    $("#chatOutput").scrollTop($("#chatOutput")[0].scrollHeight);
   });
 
 });
