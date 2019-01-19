@@ -1,6 +1,5 @@
 # RPS-Multiplayer
 
-Rock Paper Scissors multiplayer game
+Two-player Rock Paper Scissors game.  Built with Firebase.
 
-To do: implement chat.
-(in progress)
+See it here: https://bmagers.github.io/RPS-Multiplayer/
